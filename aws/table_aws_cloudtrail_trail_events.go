@@ -12,13 +12,32 @@ import (
 	"github.com/turbot/steampipe-plugin-sdk/grpc/proto"
 )
 
+type eventSummary struct {
+	EventID            string                 `json:"eventID"`
+	ReadOnly           string                 `json:"readOnly"`
+	AWSRegion          string                 `json:"awsRegion"`
+	EventName          string                 `json:"eventName"`
+	EventTime          string                 `json:"eventTime"`
+	EventType          string                 `json:"eventType"`
+	UserAgent          string                 `json:"userAgent"`
+	EventSource        string                 `json:"eventSource"`
+	EventVersion       string                 `json:"eventVersion"`
+	UserIdentity       map[string]interface{} `json:"userIdentity"`
+	EventCategory      string                 `json:"eventCategory"`
+	ManagementEvent    bool                   `json:"managementEvent"`
+	SourceIPAddress    string                 `json:"sourceIPAddress"`
+	ResponseElements   map[string]interface{} `json:"responseElements"`
+	RequestParameters  map[string]interface{} `json:"requestParameters"`
+	RecipientAccountID string                 `json:"recipientAccountId"`
+}
+
 func tableAwsCloudtrailEvent(_ context.Context) *plugin.Table {
 	return &plugin.Table{
 		Name:        "aws_cloudtrail_trail_event",
 		Description: "AWS CloudTrail Trail Event",
-		Get: &plugin.GetConfig{
-			KeyColumns: plugin.SingleColumn("event_time"),
-			Hydrate:    listCloudtrailEvents,
+		List: &plugin.ListConfig{
+			// KeyColumns: plugin.SingleColumn("event_time"),
+			Hydrate: listCloudtrailEvents,
 		},
 		Columns: awsRegionalColumns([]*plugin.Column{
 			{
@@ -92,7 +111,7 @@ func listCloudtrailEvents(ctx context.Context, d *plugin.QueryData, _ *plugin.Hy
 		return nil, err
 	}
 
-	startTime, err := stringToTime(d.KeyColumnQuals["event_time"].GetStringValue())
+	startTime, err := stringToTime("2021-02-03T14:37:27Z")
 	if err != nil {
 		plugin.Logger(ctx).Trace("listCloudtrailTrails", "startTime", startTime)
 		return nil, err
@@ -100,6 +119,12 @@ func listCloudtrailEvents(ctx context.Context, d *plugin.QueryData, _ *plugin.Hy
 
 	params := &cloudtrail.LookupEventsInput{
 		StartTime: startTime,
+		LookupAttributes: []*cloudtrail.LookupAttribute{
+			{
+				AttributeKey:   types.String("ReadOnly"),
+				AttributeValue: types.String("false"),
+			},
+		},
 	}
 
 	// List call
@@ -128,3 +153,68 @@ func stringToTime(value string) (*time.Time, error) {
 
 	return &t, nil
 }
+
+// Sample event
+// {
+//   "eventID": "84bbf085-08fe-42ca-b569-a05645237142",
+//   "readOnly": false,
+//   "awsRegion": "us-east-1",
+//   "eventName": "TerminateInstances",
+//   "eventTime": "2021-02-03T15:23:59Z",
+//   "eventType": "AwsApiCall",
+//   "requestID": "c02b9b92-1865-460b-a39d-ee63042c9037",
+//   "userAgent": "console.ec2.amazonaws.com",
+//   "eventSource": "ec2.amazonaws.com",
+//   "eventVersion": "1.08",
+//   "userIdentity": {
+//     "arn": "arn:aws:sts::013122550996:assumed-role/superuser/sumit@turbot.com-9KZTru5a7YvfJWn5lnJ",
+//     "type": "AssumedRole",
+//     "accountId": "013122550996",
+//     "accessKeyId": "ASIAQGDRKHTKA7F5ILYE",
+//     "principalId": "AROAQGDRKHTKH34YYSHIG:sumit@turbot.com-9KZTru5a7YvfJWn5lnJ",
+//     "sessionContext": {
+//       "attributes": {
+//         "creationDate": "2021-02-03T15:20:36Z",
+//         "mfaAuthenticated": "false"
+//       },
+//       "sessionIssuer": {
+//         "arn": "arn:aws:iam::013122550996:role/turbot/superuser",
+//         "type": "Role",
+//         "userName": "superuser",
+//         "accountId": "013122550996",
+//         "principalId": "AROAQGDRKHTKH34YYSHIG"
+//       },
+//       "webIdFederationData": {}
+//     }
+//   },
+//   "eventCategory": "Management",
+//   "managementEvent": true,
+//   "sourceIPAddress": "103.52.247.53",
+//   "responseElements": {
+//     "instancesSet": {
+//       "items": [
+//         {
+//           "instanceId": "i-0e76291f8e1f7ff99",
+//           "currentState": {
+//             "code": 32,
+//             "name": "shutting-down"
+//           },
+//           "previousState": {
+//             "code": 16,
+//             "name": "running"
+//           }
+//         }
+//       ]
+//     }
+//   },
+//   "requestParameters": {
+//     "instancesSet": {
+//       "items": [
+//         {
+//           "instanceId": "i-0e76291f8e1f7ff99"
+//         }
+//       ]
+//     }
+//   },
+//   "recipientAccountId": "013122550996"
+// }
