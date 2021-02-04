@@ -54,6 +54,7 @@ func tableAwsCloudtrailEvent(_ context.Context) *plugin.Table {
 				Name:        "user_name",
 				Description: "A user name or role name of the requester that called the API in the event returned.",
 				Type:        proto.ColumnType_STRING,
+				Transform:   transform.FromField("Username"),
 			},
 			{
 				Name:        "event_source",
