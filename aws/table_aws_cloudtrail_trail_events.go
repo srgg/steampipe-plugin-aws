@@ -36,8 +36,8 @@ func tableAwsCloudtrailEvent(_ context.Context) *plugin.Table {
 		Name:        "aws_cloudtrail_trail_event",
 		Description: "AWS CloudTrail Trail Event",
 		List: &plugin.ListConfig{
-			// KeyColumns: plugin.SingleColumn("event_time"),
-			Hydrate: listCloudtrailEvents,
+			KeyColumns: plugin.SingleColumn("event_time"),
+			Hydrate:    listCloudtrailEvents,
 		},
 		Columns: awsRegionalColumns([]*plugin.Column{
 			{
@@ -112,7 +112,10 @@ func listCloudtrailEvents(ctx context.Context, d *plugin.QueryData, _ *plugin.Hy
 		return nil, err
 	}
 
-	startTime, err := stringToTime("2021-02-03T14:37:27Z")
+	evenTime := d.KeyColumnQuals["event_time"].GetStringValue()
+
+	startTime, err := stringToTime(evenTime)
+	// startTime, err := stringToTime("2021-02-03T14:37:27Z")
 	if err != nil {
 		plugin.Logger(ctx).Trace("listCloudtrailTrails", "startTime", startTime)
 		return nil, err
