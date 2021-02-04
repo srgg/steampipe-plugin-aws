@@ -36,10 +36,20 @@ func tableAwsCloudtrailEvent(_ context.Context) *plugin.Table {
 		Name:        "aws_cloudtrail_trail_event",
 		Description: "AWS CloudTrail Trail Event",
 		List: &plugin.ListConfig{
-			KeyColumns: plugin.SingleColumn("event_time"),
+			KeyColumns: plugin.AllColumns([]string{"start_time", "end_time"}),
 			Hydrate:    listCloudtrailEvents,
 		},
 		Columns: awsRegionalColumns([]*plugin.Column{
+			{
+				Name:        "start_time",
+				Description: "The start time to search from for events.",
+				Type:        proto.ColumnType_TIMESTAMP,
+			},
+			{
+				Name:        "end_time",
+				Description: "The start time to search from for events.",
+				Type:        proto.ColumnType_TIMESTAMP,
+			},
 			{
 				Name:        "event_name",
 				Description: "The name of the event.",
@@ -112,17 +122,23 @@ func listCloudtrailEvents(ctx context.Context, d *plugin.QueryData, _ *plugin.Hy
 		return nil, err
 	}
 
-	evenTime := d.KeyColumnQuals["event_time"].GetStringValue()
+	//startTime, err := stringToTime(d.KeyColumnQuals["start_time"].GetStringValue())
+	//if err != nil {
+	//	plugin.Logger(ctx).Trace("listCloudtrailEvents", "startTime", startTime)
+	//	return nil, err
+	//}
+	//endTime, err := stringToTime(d.KeyColumnQuals["end_time"].GetStringValue())
+	//if err != nil {
+	//	plugin.Logger(ctx).Trace("listCloudtrailEvents", "endTime", startTime)
+	//	return nil, err
+	//}
 
-	startTime, err := stringToTime(evenTime)
-	// startTime, err := stringToTime("2021-02-03T14:37:27Z")
-	if err != nil {
-		plugin.Logger(ctx).Trace("listCloudtrailTrails", "startTime", startTime)
-		return nil, err
-	}
+	startTime := d.KeyColumnQuals["start_time"].GetTimestampValue().AsTime()
+	endTime := d.KeyColumnQuals["end_time"].GetTimestampValue().AsTime()
 
 	params := &cloudtrail.LookupEventsInput{
-		StartTime: startTime,
+		StartTime: &startTime,
+		EndTime:   &endTime,
 		LookupAttributes: []*cloudtrail.LookupAttribute{
 			{
 				AttributeKey:   types.String("ReadOnly"),
