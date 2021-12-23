@@ -24,7 +24,7 @@ func tableAwsEc2AmiShared(_ context.Context) *plugin.Table {
 		},
 		List: &plugin.ListConfig{
 			Hydrate:           listAmisByOwner,
-			KeyColumns:        plugin.SingleColumn("owner_id"),
+			KeyColumns:        plugin.AnyColumn([]string{"owner_id", "image_id"}),
 			ShouldIgnoreError: isNotFoundError([]string{"InvalidAMIID.NotFound", "InvalidAMIID.Unavailable", "InvalidAMIID.Malformed"}),
 		},
 		GetMatrixItem: BuildRegionList,
