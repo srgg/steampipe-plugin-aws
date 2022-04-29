@@ -17,6 +17,9 @@ func tableAwsEbsVolumeMetricWriteOpsHourly(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listEBSVolume,
 			Hydrate:       listEbsVolumeMetricWriteOpsHourly,
+			KeyColumns: []*plugin.KeyColumn{
+				{Name: "volume_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns(cwMetricColumns(
