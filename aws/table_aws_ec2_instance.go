@@ -670,6 +670,7 @@ func buildEc2InstanceFilter(equalQuals plugin.KeyColumnEqualsQualMap) []*ec2.Fil
 		"hypervisor":                  "hypervisor",
 		"iam_instance_profile_arn":    "iam-instance-profile.arn",
 		"image_id":                    "image-id",
+		"instance-id":                 "instance-id",
 		"instance_lifecycle":          "instance-lifecycle",
 		"instance_state":              "instance-state-name",
 		"instance_type":               "instance-type",

@@ -17,6 +17,9 @@ func tableAwsEc2InstanceMetricCpuUtilization(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listEc2Instance,
 			Hydrate:       listEc2InstanceMetricCpuUtilization,
+			KeyColumns: []*plugin.KeyColumn{
+				{Name: "instance_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns(cwMetricColumns(
