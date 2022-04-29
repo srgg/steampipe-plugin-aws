@@ -18,6 +18,15 @@ func tableAwsEc2ApplicationLoadBalancerMetricRequestCount(_ context.Context) *pl
 		List: &plugin.ListConfig{
 			ParentHydrate: listEc2ApplicationLoadBalancers,
 			Hydrate:       listEc2ApplicationLoadBalancerMetricRequestCount,
+			KeyColumns: []*plugin.KeyColumn{
+				{Name: "name", Require: plugin.Optional},
+			},
+		},
+		HydrateConfig: []plugin.HydrateConfig{
+			{
+				Func:              listEc2ApplicationLoadBalancers,
+				ShouldIgnoreError: isNotFoundError([]string{"LoadBalancerNotFound"}),
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns(cwMetricColumns(
