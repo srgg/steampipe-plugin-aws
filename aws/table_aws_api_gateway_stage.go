@@ -24,6 +24,9 @@ func tableAwsAPIGatewayStage(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listRestAPI,
 			Hydrate:       listAPIGatewayStage,
+			KeyColumns: plugin.KeyColumnSlice{
+				{Name: "rest-api-id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -171,6 +174,13 @@ type stageRowData = struct {
 func listAPIGatewayStage(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	// Get Rest API details
 	restAPI := h.Item.(*apigateway.RestApi)
+
+	// Skip the stages list call if requested rest api doesn't match parent rest api
+	if d.KeyColumnQuals["rest_api_id"] != nil {
+		if d.KeyColumnQualString("rest_api_id") != *restAPI.Id {
+			return nil, nil
+		}
+	}
 
 	// Create Session
 	svc, err := APIGatewayService(ctx, d)
