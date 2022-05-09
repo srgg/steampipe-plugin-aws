@@ -25,7 +25,7 @@ func tableAwsAPIGatewayStage(_ context.Context) *plugin.Table {
 			ParentHydrate: listRestAPI,
 			Hydrate:       listAPIGatewayStage,
 			KeyColumns: plugin.KeyColumnSlice{
-				{Name: "rest-api-id", Require: plugin.Optional},
+				{Name: "rest_api_id", Require: plugin.Optional},
 			},
 		},
 		GetMatrixItem: BuildRegionList,
