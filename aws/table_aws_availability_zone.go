@@ -27,14 +27,9 @@ func tableAwsAvailabilityZone(_ context.Context) *plugin.Table {
 			ParentHydrate: listAwsRegions,
 			Hydrate:       listAwsAvailabilityZones,
 			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "name",
-					Require: plugin.Optional,
-				},
-				{
-					Name:    "zone_id",
-					Require: plugin.Optional,
-				},
+				{Name: "name", Require: plugin.Optional},
+				{Name: "region_name", Require: plugin.Optional},
+				{Name: "zone_id", Require: plugin.Optional},
 			},
 		},
 		Columns: []*plugin.Column{
@@ -106,6 +101,13 @@ func tableAwsAvailabilityZone(_ context.Context) *plugin.Table {
 func listAwsAvailabilityZones(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	region := h.Item.(*ec2.Region)
 	plugin.Logger(ctx).Trace("getAwsAvailabilityZone", "region", *region.RegionName)
+
+	// Skip the further api call if requested region doesn't match parent region
+	if d.KeyColumnQuals["region_name"] != nil {
+		if d.KeyColumnQualString("region_name") != *region.RegionName {
+			return nil, nil
+		}
+	}
 
 	// If a region is not opted-in, we cannot list the availability zones
 	if types.SafeString(region.OptInStatus) == "not-opted-in" {
