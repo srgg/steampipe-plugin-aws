@@ -109,6 +109,11 @@ func listCloudwatchLogGroups(ctx context.Context, d *plugin.QueryData, _ *plugin
 		input.LogGroupNamePrefix = types.String(equalQuals["name"].GetStringValue())
 	}
 
+	// Will be available only in the case of aws_cloudwatch_log_stream table List hydrate call
+	if equalQuals["log_group_name"] != nil {
+		input.LogGroupNamePrefix = types.String(equalQuals["log_group_name"].GetStringValue())
+	}
+
 	// If the requested number of items is less than the paging max limit
 	// set the limit to that instead
 	limit := d.QueryContext.Limit

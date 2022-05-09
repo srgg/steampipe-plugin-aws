@@ -31,10 +31,8 @@ func tableAwsCloudwatchLogStream(_ context.Context) *plugin.Table {
 			ParentHydrate: listCloudwatchLogGroups,
 			Hydrate:       listCloudwatchLogStreams,
 			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "name",
-					Require: plugin.Optional,
-				},
+				{Name: "log_group_name", Require: plugin.Optional},
+				{Name: "name", Require: plugin.Optional},
 			},
 		},
 		GetMatrixItem: BuildRegionList,
@@ -116,9 +114,9 @@ func listCloudwatchLogStreams(ctx context.Context, d *plugin.QueryData, h *plugi
 	}
 
 	input := &cloudwatchlogs.DescribeLogStreamsInput{
-		Limit: aws.Int64(50),
+		Limit:        aws.Int64(50),
+		LogGroupName: logGroup.LogGroupName,
 	}
-	input.LogGroupName = logGroup.LogGroupName
 
 	// Additonal Filter
 	equalQuals := d.KeyColumnQuals
