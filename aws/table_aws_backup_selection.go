@@ -24,8 +24,11 @@ func tableAwsBackupSelection(_ context.Context) *plugin.Table {
 			Hydrate:           getBackupSelection,
 		},
 		List: &plugin.ListConfig{
-			Hydrate:       listBackupSelections,
 			ParentHydrate: listAwsBackupPlans,
+			Hydrate:       listBackupSelections,
+			KeyColumns: []*plugin.KeyColumn{
+				{Name: "backup_plan_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -106,14 +109,21 @@ func tableAwsBackupSelection(_ context.Context) *plugin.Table {
 func listBackupSelections(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	plugin.Logger(ctx).Trace("listBackupSelections")
 
+	// Get backup plan details
+	plan := h.Item.(*backup.PlansListMember)
+
+	// Skip the selections list call if requested backup plan doesn't match parent backup plan
+	if d.KeyColumnQuals["backup_plan_id"] != nil {
+		if d.KeyColumnQualString("backup_plan_id") != *plan.BackupPlanId {
+			return nil, nil
+		}
+	}
+
 	// Create session
 	svc, err := BackupService(ctx, d)
 	if err != nil {
 		return nil, err
 	}
-
-	// Get backup plan details
-	plan := h.Item.(*backup.PlansListMember)
 
 	input := &backup.ListBackupSelectionsInput{
 		MaxResults: aws.Int64(1000),

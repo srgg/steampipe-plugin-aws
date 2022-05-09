@@ -27,18 +27,10 @@ func tableAwsBackupRecoveryPoint(_ context.Context) *plugin.Table {
 			ParentHydrate: listAwsBackupVaults,
 			Hydrate:       listAwsBackupRecoveryPoints,
 			KeyColumns: []*plugin.KeyColumn{
-				{
-					Name:    "recovery_point_arn",
-					Require: plugin.Optional,
-				},
-				{
-					Name:    "resource_type",
-					Require: plugin.Optional,
-				},
-				{
-					Name:    "completion_date",
-					Require: plugin.Optional,
-				},
+				{Name: "backup_vault_name", Require: plugin.Optional},
+				{Name: "completion_date", Require: plugin.Optional},
+				{Name: "recovery_point_arn", Require: plugin.Optional},
+				{Name: "resource_type", Require: plugin.Optional},
 			},
 		},
 		GetMatrixItem: BuildRegionList,
@@ -156,6 +148,13 @@ func tableAwsBackupRecoveryPoint(_ context.Context) *plugin.Table {
 func listAwsBackupRecoveryPoints(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	plugin.Logger(ctx).Trace("listAwsBackupRecoveryPoints")
 	vault := h.Item.(*backup.VaultListMember)
+
+	// Skip the BackUpRecoveryPoint list call if requested backup vault doesn't match parent backup vault
+	if d.KeyColumnQuals["backup_vault_name"] != nil {
+		if d.KeyColumnQualString("backup_vault_name") != *vault.BackupVaultName {
+			return nil, nil
+		}
+	}
 
 	// Create session
 	svc, err := BackupService(ctx, d)
