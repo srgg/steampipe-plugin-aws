@@ -24,6 +24,9 @@ func tableAwsAPIGatewayV2Stage(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listAPIGatewayV2API,
 			Hydrate:       listAPIGatewayV2Stages,
+			KeyColumns: plugin.KeyColumnSlice{
+				{Name: "api_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -158,6 +161,13 @@ func listAPIGatewayV2Stages(ctx context.Context, d *plugin.QueryData, h *plugin.
 
 	// Get API details
 	apiGatewayv2API := h.Item.(*apigatewayv2.Api)
+
+	// Skip the v2 stage list call if requested api gateway doesn't match parent api gateway
+	if d.KeyColumnQuals["api_id"] != nil {
+		if d.KeyColumnQualString("api_id") != *apiGatewayv2API.ApiId {
+			return nil, nil
+		}
+	}
 
 	svc, err := APIGatewayV2Service(ctx, d)
 	if err != nil {

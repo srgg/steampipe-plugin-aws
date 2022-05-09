@@ -29,6 +29,9 @@ func tableAwsAPIGatewayV2Integration(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listAPIGatewayV2API,
 			Hydrate:       listAPIGatewayV2Integrations,
+			KeyColumns: plugin.KeyColumnSlice{
+				{Name: "api_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -168,6 +171,13 @@ func tableAwsAPIGatewayV2Integration(_ context.Context) *plugin.Table {
 func listAPIGatewayV2Integrations(ctx context.Context, d *plugin.QueryData, h *plugin.HydrateData) (interface{}, error) {
 	// Get API details
 	api := h.Item.(*apigatewayv2.Api)
+
+	// Skip the v2 integration list call if requested api gateway doesn't match parent api gateway
+	if d.KeyColumnQuals["api_id"] != nil {
+		if d.KeyColumnQualString("api_id") != *api.ApiId {
+			return nil, nil
+		}
+	}
 
 	// Create Session
 	svc, err := APIGatewayV2Service(ctx, d)
