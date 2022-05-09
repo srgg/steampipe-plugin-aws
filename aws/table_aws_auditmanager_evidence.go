@@ -32,6 +32,9 @@ func tableAwsAuditManagerEvidence(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listAwsAuditManagerAssessments,
 			Hydrate:       listAuditManagerEvidences,
+			KeyColumns: plugin.KeyColumnSlice{
+				{Name: "assessment_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -171,6 +174,13 @@ func listAuditManagerEvidences(ctx context.Context, d *plugin.QueryData, h *plug
 
 	// Get assessment details
 	assessmentID := *h.Item.(*auditmanager.AssessmentMetadataItem).Id
+
+	// Skip the evidence list call if requested assessment doesn't match parent assessment
+	if d.KeyColumnQuals["assessment_id"] != nil {
+		if d.KeyColumnQualString("assessment_id") != assessmentID {
+			return nil, nil
+		}
+	}
 
 	// Create session
 	svc, err := AuditManagerService(ctx, d, region)

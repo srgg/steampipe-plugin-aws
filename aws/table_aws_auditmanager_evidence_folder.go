@@ -25,6 +25,9 @@ func tableAwsAuditManagerEvidenceFolder(_ context.Context) *plugin.Table {
 		List: &plugin.ListConfig{
 			ParentHydrate: listAwsAuditManagerAssessments,
 			Hydrate:       listAuditManagerEvidenceFolders,
+			KeyColumns: plugin.KeyColumnSlice{
+				{Name: "assessment_id", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -150,20 +153,27 @@ func listAuditManagerEvidenceFolders(ctx context.Context, d *plugin.QueryData, h
 	region := d.KeyColumnQualString(matrixKeyRegion)
 	plugin.Logger(ctx).Trace("listAuditManagerEvidenceFolders", "AWS_REGION", region)
 
+	// Get assessment details
+	assessmentID := *h.Item.(*auditmanager.AssessmentMetadataItem).Id
+
+	// Skip the evidence folders list call if requested assessment doesn't match parent assessment
+	if d.KeyColumnQuals["assessment_id"] != nil {
+		if d.KeyColumnQualString("assessment_id") != assessmentID {
+			return nil, nil
+		}
+	}
+
 	// Create session
 	svc, err := AuditManagerService(ctx, d, region)
 	if err != nil {
 		return nil, err
 	}
 
-	// Get assessment details
-	assessmentID := *h.Item.(*auditmanager.AssessmentMetadataItem).Id
-
 	input := &auditmanager.GetEvidenceFoldersByAssessmentInput{
-		MaxResults: aws.Int64(1000),
+		MaxResults:   aws.Int64(1000),
+		AssessmentId: &assessmentID,
 	}
 
-	input.AssessmentId = &assessmentID
 	// Limiting the results
 	limit := d.QueryContext.Limit
 	if d.QueryContext.Limit != nil {
