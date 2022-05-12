@@ -26,6 +26,9 @@ func tableAwsEc2ApplicationLoadBalancerListener(_ context.Context) *plugin.Table
 		List: &plugin.ListConfig{
 			ParentHydrate: listEc2LoadBalancers,
 			Hydrate:       listEc2LoadBalancerListeners,
+			KeyColumns: plugin.KeyColumnSlice{
+				{Name: "load_balancer_arn", Require: plugin.Optional},
+			},
 		},
 		GetMatrixItem: BuildRegionList,
 		Columns: awsRegionalColumns([]*plugin.Column{
@@ -97,9 +100,15 @@ func listEc2LoadBalancers(ctx context.Context, d *plugin.QueryData, _ *plugin.Hy
 		return nil, err
 	}
 
+	input := elbv2.DescribeLoadBalancersInput{}
+
+	if d.KeyColumnQuals["load_balancer_arn"] != nil {
+		input.LoadBalancerArns = aws.StringSlice([]string{d.KeyColumnQualString("load_balancer_arn")})
+	}
+
 	// List call
 	err = svc.DescribeLoadBalancersPages(
-		&elbv2.DescribeLoadBalancersInput{},
+		&input,
 		func(page *elbv2.DescribeLoadBalancersOutput, isLast bool) bool {
 			for _, loadBalancer := range page.LoadBalancers {
 				d.StreamListItem(ctx, loadBalancer)
