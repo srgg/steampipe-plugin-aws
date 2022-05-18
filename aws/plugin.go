@@ -90,6 +90,7 @@ func Plugin(ctx context.Context) *plugin.Plugin {
 			"aws_dlm_lifecycle_policy":                                     tableAwsDlmLifecyclePolicy(ctx),
 			"aws_dms_replication_instance":                                 tableAwsDmsReplicationInstance(ctx),
 			"aws_docdb_cluster_snapshot":                                   tableAwsDocDBClusterSnapshot(ctx),
+			"aws_docdb_cluster":                                            tableAwsDocDBCluster(ctx),
 			"aws_dynamodb_backup":                                          tableAwsDynamoDBBackup(ctx),
 			"aws_dynamodb_global_table":                                    tableAwsDynamoDBGlobalTable(ctx),
 			"aws_dynamodb_metric_account_provisioned_read_capacity_util":   tableAwsDynamoDBMetricAccountProvisionedReadCapacityUtilization(ctx),
