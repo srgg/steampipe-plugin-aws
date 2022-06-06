@@ -422,6 +422,12 @@ func getBucketEncryption(ctx context.Context, d *plugin.QueryData, h *plugin.Hyd
 	bucket := h.Item.(*s3.Bucket)
 	location := h.HydrateResults["getBucketLocation"].(*s3.GetBucketLocationOutput)
 
+	if location.LocationConstraint != nil {
+		plugin.Logger(ctx).Warn("getBucketEncryption: location: %s", *location.LocationConstraint)
+	} else {
+		plugin.Logger(ctx).Warn("getBucketEncryption: location: nil")
+	}
+
 	// Create Session
 	svc, err := S3Service(ctx, d, *location.LocationConstraint)
 	if err != nil {
@@ -438,6 +444,7 @@ func getBucketEncryption(ctx context.Context, d *plugin.QueryData, h *plugin.Hyd
 				return nil, nil
 			}
 		}
+		plugin.Logger(ctx).Error("GetBucketEncryption FAILED: %+v")
 		return nil, err
 	}
 
